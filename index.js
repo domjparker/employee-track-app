@@ -66,17 +66,191 @@ function viewEmployees() {
         if (err) throw err;
         // Log all results of the SELECT statement
         console.table(res);
-        connection.end();
+        // ? prompt with would you like to add an employee? IF yes, do. If no, initQuestions()
+        initQuestions();
     })
 }
 
 
     
-// viewRoles()
+function viewRoles() {
+    console.log("Viewing all employee roles.")
+    var query = "SELECT * FROM roles;"
+    connection.query(query, function(err, res) {
+        if (err) throw err;
+        // Log all results of the SELECT statement
+        console.table(res);
+        // ? prompt with would you like to add a role? IF yes, do. If no, initQuestions()
+        initQuestions();
+    })
+}
 
-// viewDepartments()
 
-// addEmployee()
+function viewDepartments() {
+    console.log("Viewing all departments.")
+    var query = "SELECT * FROM departments;"
+    connection.query(query, function(err, res) {
+        if (err) throw err;
+        // Log all results of the SELECT statement
+        console.table(res);
+        // ? prompt with would you like to add a department? IF yes, do. If no, initQuestions()
+    
+        initQuestions();
+    })
+}
+
+const addEmployee = async () => {
+    // query database for list of current roles
+    connection.query("SELECT * FROM roles", async (err, roleResults) => {
+        if (err) throw err;
+        connection.query("SELECT * FROM roles", async (err, roleResults) => {
+            if (err) throw err;
+            // prompt with - what is the first name, last name, employee role, and employee manager?
+            const { first_name, last_name, employee_role, employee_manager } = await inquirer.prompt([
+                {
+                    name: "first_name",
+                    type: "input",
+                    message: "What is the first name of the person you would like to add as an employee?",
+                },
+                {
+                    name: "last_name",
+                    type: "input",
+                    message: "What is the last name of the person you would like to add as an employee?",
+                },
+                {
+                    name: "employee_role",
+                    type: "list",
+                    message: "What will the person's role be?",
+                    choices: roleResults.map((departmentResult) => departmentResult.dept_name)
+                },
+                // {
+                //     name: "employee_manager",
+                //     type: "list",
+                //     message: "Who will the person's manager be?",
+                //     choices: 
+                // },
+            ])
+        })
+    })
+    // take answers and add employee into database
+}
+
+
+
+const addRole = async () => {
+    // query database for list of current roles and salaries
+    connection.query("SELECT * FROM roles", async (err, roleResults) => {
+        if (err) throw err;
+        console.table(roleResults);
+        connection.query("SELECT * FROM departments", async (err, departmentResults) => {
+            if (err) throw err;
+            // prompt with - what is the new role, it's salary, and department?
+            const { new_role, salary, department } = await inquirer.prompt([
+                {
+                    name: "new_role",
+                    type: "input",
+                    message: "What role would you like to add to the list above?",
+                },
+                {
+                    name: "salary",
+                    type: "input",
+                    message: "What is the salary amount?",
+                },
+                {
+                    name: "department",
+                    type: "list",
+                    message: "What department will this role be in?",
+                    choices: departmentResults.map((departmentResult) => departmentResult.dept_name)
+                },
+            ])
+        })
+    })
+    // take answers and add role into database
+}
+
+// addDepartment()
+const addDepartment = async () => {
+    // query database for list of current departments
+    connection.query("SELECT * FROM departments", async (err, deptResults) => {
+        if (err) throw err;
+        console.table(deptResults);
+            // prompt with - what new department?
+            const { new_dept } = await inquirer.prompt([
+                {
+                    name: "new_dept",
+                    type: "input",
+                    message: "What new department would you like to add to the list above?",
+                },
+            ])
+    })
+    // take answer and add department into database
+}
+
+
+// function bidAuction() {
+//     // query the database for all items being auctioned
+//     connection.query("SELECT * FROM auctions", function(err, results) {
+//       if (err) throw err;
+//       // once you have the items, prompt the user for which they'd like to bid on
+//       inquirer
+//         .prompt([
+//           {
+//             name: "choice",
+//             type: "rawlist",
+//             choices: function() {
+//               var choiceArray = [];
+//               for (var i = 0; i < results.length; i++) {
+//                 choiceArray.push(results[i].item_name);
+//               }
+//               return choiceArray;
+//             },
+//             message: "What auction would you like to place a bid in?"
+//           },
+//           {
+//             name: "bid",
+//             type: "input",
+//             message: "How much would you like to bid?"
+//           }
+//         ])
+//         .then(function(answer) {
+//           // get the information of the chosen item
+//           var chosenItem;
+//           for (var i = 0; i < results.length; i++) {
+//             if (results[i].item_name === answer.choice) {
+//               chosenItem = results[i];
+//             }
+//           }
+  
+//           // determine if bid was high enough
+//           if (chosenItem.highest_bid < parseInt(answer.bid)) {
+//             // bid was high enough, so update db, let the user know, and start over
+//             connection.query(
+//               "UPDATE auctions SET ? WHERE ?",
+//               [
+//                 {
+//                   highest_bid: answer.bid
+//                 },
+//                 {
+//                   id: chosenItem.id
+//                 }
+//               ],
+//               function(error) {
+//                 if (error) throw err;
+//                 console.log("Bid placed successfully!");
+//                 start();
+//               }
+//             );
+//           }
+//           else {
+//             // bid wasn't high enough, so apologize and start over
+//             console.log("Your bid was too low. Try again...");
+//             start();
+//           }
+//         });
+//     });
+//   }
+  
+
 
 // addRole()
 
