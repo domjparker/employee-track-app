@@ -27,7 +27,7 @@ const initQuestions = async () => {
         name: "whatToDo",
         type: "list",
         message: "What would you like to do?",
-        choices: ["View Employees", "View Roles", "View Departments", "Add Employee", "Add Role", "Add Department", "Update Employee Role", "Quit"],
+        choices: ["View Employees", "View Roles", "View Departments", "Add Employee", "Add Role", "Add Department", "Update Employee Role", "Delete Employee", "Quit"],
     });
 
     switch (whatToDo) {
@@ -52,6 +52,9 @@ const initQuestions = async () => {
         case "Update Employee Role":
             updateEmployeeRole();
             break;
+        case "Delete Employee":
+            deleteEmployee();
+            break;
         default:
             console.log("You have exited the application");
             connection.end();
@@ -61,12 +64,13 @@ const initQuestions = async () => {
 
 function viewEmployees() {
     console.log("Viewing all employees.")
-    var query = "SELECT * FROM employees;"
+    var query = "SELECT employees.id, employees.first_name, employees.last_name, roles.title,"; 
+    query += " dept_name, roles.salary, employees.manager_id AS manager FROM employees JOIN roles ";
+    query += "ON employees.role_id = roles.id JOIN departments ON roles.department_id = departments.id";
     connection.query(query, function (err, res) {
         if (err) throw err;
         // Log all results of the SELECT statement
         console.table(res);
-        // ? prompt with would you like to add an employee? IF yes, do. If no, initQuestions()
         initQuestions();
     })
 }
@@ -80,7 +84,6 @@ function viewRoles() {
         if (err) throw err;
         // Log all results of the SELECT statement
         console.table(res);
-        // ? prompt with would you like to add a role? IF yes, do. If no, initQuestions()
         initQuestions();
     })
 }
@@ -93,8 +96,6 @@ function viewDepartments() {
         if (err) throw err;
         // Log all results of the SELECT statement
         console.table(res);
-        // ? prompt with would you like to add a department? IF yes, do. If no, initQuestions()
-
         initQuestions();
     })
 }
@@ -122,18 +123,19 @@ const addEmployee = async () => {
                     value: employee.id
                 }
             })
-
             // prompt with - what is the first name, last name, employee role, and employee manager?
             const answers = await inquirer.prompt([
                 {
                     name: "first_name",
                     type: "input",
                     message: "What is the first name of the person you would like to add as an employee?",
+                    validate: (value) => (isNaN(value) ? true : false),
                 },
                 {
                     name: "last_name",
                     type: "input",
                     message: "What is the last name of the person you would like to add as an employee?",
+                    validate: (value) => (isNaN(value) ? true : false),
                 },
                 {
                     name: "role_title",
@@ -189,11 +191,13 @@ const addRole = async () => {
                     name: "new_role",
                     type: "input",
                     message: "What role would you like to add to the list above?",
+                    validate: (value) => (isNaN(value) ? true : false),
                 },
                 {
                     name: "salary",
                     type: "input",
                     message: "What is the salary amount?",
+                    validate: (value) => (!isNaN(value) ? true : false),
                 },
                 {
                     name: "department",
@@ -234,6 +238,7 @@ const addDepartment = async () => {
                 name: "new_dept",
                 type: "input",
                 message: "What new department would you like to add to the list above?",
+                validate: (value) => (isNaN(value) ? true : false),
             },
         ])
     })
@@ -289,7 +294,7 @@ const updateEmployeeRole = async () => {
                         id: answers.whichEmployee
                     }
                 ],
-                function(err) {
+                function (err) {
                     if (err) throw err;
                     console.log("The employee's role has been updated.");
                     initQuestions();
@@ -298,3 +303,42 @@ const updateEmployeeRole = async () => {
         })
     })
 }
+
+const deleteEmployee = async () => {
+    // show table of employees, their titles,departments, and managers
+    var query = "SELECT * FROM employees"
+    connection.query(query, async (err, employeeResults) => {
+        if (err) throw err;
+        console.table(employeeResults)
+        let employeesList = await employeeResults.map(function (employee) {
+            return {
+                name: employee.first_name + " " + employee.last_name,
+                value: employee.id
+            }
+        })
+        // prompt with - which employee, and role?
+        const answers = await inquirer.prompt([
+            {
+                name: "whichEmployee",
+                type: "list",
+                message: "Which employee would you like to delete?",
+                choices: employeesList
+            }
+        ])
+        // when finished prompting, delete employee in database
+        connection.query(
+            "DELETE FROM employees WHERE ?",
+            [
+                {
+                    id: answers.whichEmployee
+                }
+            ],
+            function (err) {
+                if (err) throw err;
+                console.log("The employee deleted from the system.");
+                initQuestions();
+            }
+        )
+    })
+}
+
