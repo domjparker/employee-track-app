@@ -164,7 +164,7 @@ const addEmployee = async () => {
                     console.log(answers.first_name + " " + answers.last_name + "was added as an employee");
                     initQuestions();
                 }
-            ); 
+            );
         })
     })
 }
@@ -243,27 +243,58 @@ const addDepartment = async () => {
 
 const updateEmployeeRole = async () => {
     // show table of employees, their titles,departments, and managers
-    var query = "SELECT employees.id, employees.first_name, employees.last_name, roles.title FROM employees LEFT JOIN roles ON employees.role_id = roles.id"
+    var query = "SELECT * FROM employees"
     connection.query(query, async (err, employeeResults) => {
         if (err) throw err;
-        console.table(employeeResults);
+        console.table(employeeResults)
+        let employeesList = await employeeResults.map(function (employee) {
+            return {
+                name: employee.first_name + " " + employee.last_name,
+                value: employee.id
+            }
+        })
+        // query database for list of current roles
         connection.query("SELECT * FROM roles", async (err, roleResults) => {
             if (err) throw err;
+
+            let myRoles = await roleResults.map(function (role) {
+                return {
+                    name: role.title,
+                    value: role.id
+                }
+            })
             // prompt with - which employee, and role?
-            const { whichEmployee, } = await inquirer.prompt([
+            const answers = await inquirer.prompt([
                 {
                     name: "whichEmployee",
                     type: "list",
-                    message: "Which employee would you like to update? (choose by id)",
-                    choices: employeeResults.map((employeeResult) => employeeResult.id)
+                    message: "Which employee would you like to update?",
+                    choices: employeesList
                 },
                 {
                     name: "whatRole",
                     type: "list",
-                    message: "What role would you like to update that employee to?",
-                    choices: roleResults.map((roleResult) => roleResult.title)
-                },
+                    message: "What role would you like to update the employee to?",
+                    choices: myRoles
+                }
             ])
+            // when finished prompting, update employee's role in database
+            connection.query(
+                "UPDATE employees SET ? WHERE ?",
+                [
+                    {
+                        role_id: answers.whatRole
+                    },
+                    {
+                        id: answers.whichEmployee
+                    }
+                ],
+                function(err) {
+                    if (err) throw err;
+                    console.log("The employee's role has been updated.");
+                    initQuestions();
+                }
+            )
         })
     })
 }
