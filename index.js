@@ -164,30 +164,27 @@ const addEmployee = async () => {
                     console.log(answers.first_name + " " + answers.last_name + "was added as an employee");
                     initQuestions();
                 }
-            );
-            
+            ); 
         })
-
     })
-
 }
-
 
 const addRole = async () => {
     // query database for list of current roles and salaries
     connection.query("SELECT * FROM roles", async (err, roleResults) => {
         if (err) throw err;
         console.table(roleResults);
+        // query database for list of departments as choices for 3rd question.
         connection.query("SELECT * FROM departments", async (err, departmentResults) => {
             if (err) throw err;
-            let myDep = departmentResults.map(function (dep) {
+            let myDepts = departmentResults.map(function (dept) {
                 return {
-                    name: dep.dept_name,
-                    value: dep.id
+                    name: dept.dept_name,
+                    value: dept.id
                 }
             })
             // prompt with - what is the new role, it's salary, and department?
-            const { new_role, salary, department } = await inquirer.prompt([
+            const answers = await inquirer.prompt([
                 {
                     name: "new_role",
                     type: "input",
@@ -202,9 +199,24 @@ const addRole = async () => {
                     name: "department",
                     type: "list",
                     message: "What department will this role be in?",
-                    choices: myDep
+                    choices: myDepts
                 },
             ])
+            console.log(answers)
+            // when finished prompting, insert a new item into the db with that info
+            connection.query(
+                "INSERT INTO roles SET ?",
+                {
+                    title: answers.new_role,
+                    salary: answers.salary,
+                    department_id: answers.department
+                },
+                (err) => {
+                    if (err) throw err;
+                    console.log("The role of " + answers.new_role + " has been added.");
+                    initQuestions();
+                }
+            );
         })
     })
     // take answers and add role into database
