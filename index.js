@@ -27,7 +27,7 @@ const initQuestions = async () => {
         name: "whatToDo",
         type: "list",
         message: "What would you like to do?",
-        choices: ["View Employees", "View Roles", "View Departments", "Add Employee", "Add Role", "Add Department", "Update Employee Role", "Delete Employee", "Quit"],
+        choices: ["View Employees", "View Roles", "View Departments", "Add Employee", "Add Role", "Add Department", "Update Employee Role", "Update Manager", "Delete Employee", "Quit"],
     });
 
     switch (whatToDo) {
@@ -52,6 +52,9 @@ const initQuestions = async () => {
         case "Update Employee Role":
             updateEmployeeRole();
             break;
+        case "Update Manager":
+            updateManager();
+            break;
         case "Delete Employee":
             deleteEmployee();
             break;
@@ -64,7 +67,7 @@ const initQuestions = async () => {
 
 function viewEmployees() {
     console.log("Viewing all employees.")
-    var query = "SELECT employees.id, employees.first_name, employees.last_name, roles.title,"; 
+    var query = "SELECT employees.id, employees.first_name, employees.last_name, roles.title,";
     query += " dept_name, roles.salary, employees.manager_id AS manager FROM employees JOIN roles ";
     query += "ON employees.role_id = roles.id JOIN departments ON roles.department_id = departments.id";
     connection.query(query, function (err, res) {
@@ -303,6 +306,53 @@ const updateEmployeeRole = async () => {
         })
     })
 }
+const updateManager = async () => {
+    // show table of employees, their titles,departments, and managers
+    var query = "SELECT * FROM employees"
+    connection.query(query, async (err, employeeResults) => {
+        if (err) throw err;
+        console.table(employeeResults)
+        let employeesList = await employeeResults.map(function (employee) {
+            return {
+                name: employee.first_name + " " + employee.last_name,
+                value: employee.id
+            }
+        })
+        // reuse list of choices for managers from recent query
+        // prompt with - which employee, and role?
+        const answers = await inquirer.prompt([
+            {
+                name: "whichEmployee",
+                type: "list",
+                message: "For which employee would you like to assign a new manager?",
+                choices: employeesList
+            },
+            {
+                name: "whichManager",
+                type: "list",
+                message: "What role would you like to update the employee to?",
+                choices: employeesList
+            }
+        ])
+        // when finished prompting, update employee's manager in database
+        connection.query(
+            "UPDATE employees SET ? WHERE ?",
+            [
+                {
+                    manager_id: answers.whichEmployee
+                },
+                {
+                    id: answers.whichEmployee
+                }
+            ],
+            function (err) {
+                if (err) throw err;
+                console.log("The employee has been assigned an updated manager.");
+                initQuestions();
+            }
+        )
+    })
+};
 
 const deleteEmployee = async () => {
     // show table of employees, their titles,departments, and managers
