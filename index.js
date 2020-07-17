@@ -27,12 +27,15 @@ const initQuestions = async () => {
         name: "whatToDo",
         type: "list",
         message: "What would you like to do?",
-        choices: ["View Employees", "View Roles", "View Departments", "Add Employee", "Add Role", "Add Department", "Update Employee Role", "Update Manager", "Delete Employee", "Quit"],
+        choices: ["View Employees", "View Employees by Manager", "View Roles", "View Departments", "Add Employee", "Add Role", "Add Department", "Update Employee Role", "Update Manager", "Delete Employee", "Quit"],
     });
 
     switch (whatToDo) {
         case "View Employees":
             viewEmployees();
+            break;
+        case "View Employees by Manager":
+            viewEmployeesByMan();
             break;
         case "View Roles":
             viewRoles();
@@ -67,9 +70,8 @@ const initQuestions = async () => {
 
 function viewEmployees() {
     console.log("Viewing all employees.")
-    var query = "SELECT employees.id, employees.first_name, employees.last_name, roles.title,";
-    query += " dept_name, roles.salary, employees.manager_id AS manager FROM employees JOIN roles ";
-    query += "ON employees.role_id = roles.id JOIN departments ON roles.department_id = departments.id";
+    var query = "SELECT employees.id, employees.first_name, employees.last_name, roles.title, departments.dept_name, roles.salary ";
+    query +="FROM employees JOIN roles ON employees.role_id = roles.id JOIN departments ON roles.department_id = departments.id";
     connection.query(query, function (err, res) {
         if (err) throw err;
         // Log all results of the SELECT statement
@@ -78,11 +80,23 @@ function viewEmployees() {
     })
 }
 
-
+function viewEmployeesByMan() {
+    console.log("Viewing all employees by manager.")
+    var query = "SELECT employees.id, employees.first_name, employees.last_name, roles.title, departments.dept_name, roles.salary, ";
+    query +="managers.last_name AS Manager FROM employees JOIN roles ON employees.role_id = roles.id JOIN departments ON roles.department_id ";
+    query +="= departments.id JOIN employees AS managers ON employees.manager_id = managers.id";
+    connection.query(query, function (err, res) {
+        if (err) throw err;
+        // Log all results of the SELECT statement
+        console.table(res);
+        initQuestions();
+    })
+}
 
 function viewRoles() {
     console.log("Viewing all employee roles.")
-    var query = "SELECT * FROM roles;"
+    var query = "SELECT roles.id, roles.title, roles.salary, roles.department_id, departments.dept_name ";
+    query +="FROM roles LEFT JOIN departments ON roles.department_id = departments.id;";
     connection.query(query, function (err, res) {
         if (err) throw err;
         // Log all results of the SELECT statement
@@ -339,7 +353,7 @@ const updateManager = async () => {
             "UPDATE employees SET ? WHERE ?",
             [
                 {
-                    manager_id: answers.whichEmployee
+                    manager_id: answers.whichManager
                 },
                 {
                     id: answers.whichEmployee
@@ -385,7 +399,7 @@ const deleteEmployee = async () => {
             ],
             function (err) {
                 if (err) throw err;
-                console.log("The employee deleted from the system.");
+                console.log("The employee has been deleted from the system.");
                 initQuestions();
             }
         )

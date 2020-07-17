@@ -37,3 +37,5 @@ dept_name, roles.salary, employees.manager_id AS first_name
 FROM employees 
 JOIN roles ON employees.role_id = roles.id
 JOIN departments ON roles.department_id = departments.id 
+
+
