@@ -19,3 +19,9 @@ SELECT employees.id, employees.first_name, employees.last_name, roles.title, dep
  FROM employees JOIN roles ON employees.role_id = roles.id JOIN departments ON roles.department_id = departments.id JOIN employees
 
 SELECT roles.id, roles.title, roles.salary, roles.department_id, departments.dept_name FROM roles LEFT JOIN departments ON roles.department_id = departments.id
+
+SELECT employees.id, employees.first_name, employees.last_name, roles.title, 
+dept_name, roles.salary, employees.manager_id AS first_name
+FROM employees 
+JOIN roles ON employees.role_id = roles.id
+JOIN departments ON roles.department_id = departments.id 

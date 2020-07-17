@@ -22,7 +22,6 @@ connection.connect((err) => {
 
 // function which prompts the user for what action they should take
 const initQuestions = async () => {
-    // async function start() {
     const { whatToDo } = await inquirer.prompt({
         name: "whatToDo",
         type: "list",
@@ -163,12 +162,10 @@ const addEmployee = async () => {
                 {
                     name: "employee_manager",
                     type: "list",
-                    message: "Who will the person's manager be? (If the person currently does not have a manager, leave this blank",
+                    message: "Who will the person's manager be?",
                     choices: myManagers
                 },
             ]);
-            // need to convert 
-            console.log(answers)
             // when finished prompting, insert a new item into the db with that info
             connection.query(
                 "INSERT INTO employees SET ?",
@@ -180,7 +177,7 @@ const addEmployee = async () => {
                 },
                 (err) => {
                     if (err) throw err;
-                    console.log(answers.first_name + " " + answers.last_name + "was added as an employee");
+                    console.log(answers.first_name + " " + answers.last_name + " was added as an employee");
                     initQuestions();
                 }
             );
@@ -223,7 +220,6 @@ const addRole = async () => {
                     choices: myDepts
                 },
             ])
-            console.log(answers)
             // when finished prompting, insert a new item into the db with that info
             connection.query(
                 "INSERT INTO roles SET ?",
@@ -250,7 +246,7 @@ const addDepartment = async () => {
         if (err) throw err;
         console.table(deptResults);
         // prompt with - what new department?
-        const { new_dept } = await inquirer.prompt([
+        const answer = await inquirer.prompt([
             {
                 name: "new_dept",
                 type: "input",
@@ -258,6 +254,18 @@ const addDepartment = async () => {
                 validate: (value) => (isNaN(value) ? true : false),
             },
         ])
+        // when finished prompting, insert a new item into the db with that info
+        connection.query(
+            "INSERT INTO departments SET ?",
+            {
+                dept_name: answer.new_dept
+            },
+            (err) => {
+                if (err) throw err;
+                console.log(answer.new_role + " has been added as department.");
+                initQuestions();
+            }
+        );
     })
     // take answer and add department into database
 }
@@ -344,7 +352,7 @@ const updateManager = async () => {
             {
                 name: "whichManager",
                 type: "list",
-                message: "What role would you like to update the employee to?",
+                message: "Who would you like the employee's new manager to be?",
                 choices: employeesList
             }
         ])
